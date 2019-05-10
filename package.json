@@ -1,0 +1,20 @@
+{
+  "name": "bamazon",
+  "version": "1.0.0",
+  "description": "Homework9",
+  "main": "bamazonCustomer.js",
+  "scripts": {
+    "test": "test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "BAmazon"
+  },
+  "keywords": [
+    "mysql",
+    "&",
+    "node"
+  ],
+  "author": "Claire Morawski",
+  "license": "ISC"
+}
