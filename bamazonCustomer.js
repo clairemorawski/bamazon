@@ -150,3 +150,4 @@ function promptUserPurchase() {
             //Run application
             runbamazon();
         });
+    }
