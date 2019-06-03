@@ -3,7 +3,7 @@
 //Include the ids, names, and prices of products for sale.
 
 var inquirer = require("inquirer");
-var mysql = require('mysql');
+var mysql = require("mysql");
 
 //mysql Database connection
 var connection = mysql.createConnection({
@@ -13,141 +13,136 @@ var connection = mysql.createConnection({
     port: 3306,
 
     // Your username
-    user: "root",
+    user: 'root',
 
     // Your password
-    password: "",
-    database: "bamazon_db"
+    password: 'root',
+    database: 'bamazon_db'
 });
 
+//show products from product table
 connection.connect(function (err) {
     if (err) throw err;
-    console.log("connected as id " + connection.threadId);
-    connection.end();
+    printProducts();
 });
 
-//Validate Input
-function validateInput(value) {
-    var integer = Number.isInteger(parseFloat(value));
-    var sign = Math.sign(value);
+//function to show products from database
+function printProducts() {
+    connection.query('SELECT * FROM products', function (err, res) {
+        if (err) throw err;
 
-    if (integer && (sign === 1)) {
-        return true;
-    } else {
-        return 'Enter a value 0-300';
-    }
+        //for loop to print each product
+        for (var i = 0; i < res.length; i++) {
+            console.log('-------------------');
+            console.log('Item ID: ' + res[i].item_id);
+            console.log('Product Name: ' + res[i].product_name);
+            console.log('Department: ' + res[i].department_name);
+            console.log('Price: ' + res[i].price);
+            console.log('Units Available: ' + res[i].stock_quantity);
+        }
+        console.log('\n');
+        promptUserPurchase();
+    });
 }
 
-//Display list of items with prices
+//Prompt User of their options of products to purchase
 function promptUserPurchase() {
-    // Prompt the user with 2 messages:
-    //1) should ask them the ID of the product they would like to buy.
     inquirer.prompt([
-
+        //1) should ask them the ID of the product they would like to buy.
         {
-            type: "input",
-            name: "userInput",
-            message: "Which ID of the product would you like to purchase?",
-            validate: validateInput,
+            type: 'list',
+            message: 'Which ID of the product would you like to purchase?',
+            choices: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'],
+            name: 'choice',
             filter: Number
         },
-        // 2) ask how many units of the product they would like to buy.
+        //2) ask how many units of the product they would like to buy.
         {
-            type: "input",
-            name: "userInput",
-            message: "How many units of the product would you like to purchase?",
-            validate: validateInput,
+            type: 'input',
+            name: 'quantity',
+            message: 'How many units of the product would you like to purchase?',
             filter: Number
+        },
+        {
+            type: 'confirm',
+            message: 'Are you sure?',
+            name: 'confirmChoice',
+            default: true
         }
+    ])
+        .then(function (response) {
+            var choice = response.choice;
+            var quantity = response.quantity;
+            var confirm = response.confirmChoice;
 
-        // After prompt 1 & 2, store the user's response in a variable called location.
-    ]).then(function (input) {
-
-        var item = input.item_id;
-        var quantity = input.quantity;
-
-        // console.log(location.userInput);
-        //console.log(JSON.stringify(data, null, 2));
-
-        //Confirm the customer's chosen product exists in the quantity inputted
-        var queryStr = 'SELECT * FROM products WHERE ?';
-        connection.query(queryStr, { item_id: item }, function (err, data) {
-            if (err) throw err;
-            //customer's wanted quantity is not in stock
-            if (data.length === 0) {
-                console.log("ERROR. Insuffient Quantity!");
-                displayInventory();
+            //Sell product if user confirms purchase
+            if (confirm) {
+                processingPurchase(choice, quantity);
             } else {
-                var item_id = id[0];
-
-                //customer's wanted quantity is in stock
-                if (quantity <= item_id.stock_quantity) {
-                    console.log('The product quantity is in stock. Order is being processed.');
-
-                    //update SQL database with quantity (after customer's order)
-                    var updateQueryStr = 'UPDATE products SET stock_quantity = ' + (productData.stock_quantity - quantity) + 'WHERE item_id = ' + item;
-
-                    //Update inventory balances
-                    connection.query(updateQueryStr, function (err, data) {
-                        if (err) throw err;
-
-                        //Notify customer order was successfully processed and the total cost of their order
-                        console.log('Your order has been successfully processed. Your total cost of purchase is $' + productData.price * stock_quantity);
-                        console.log('Your order has been placed!');
-                        console.log("\n---------------------------------------------------------------------\n");
-
-                        //End database connection
-                        connection.end();
-                    })
-
-
-                } else {
-                    console.log('Sorry, there is not enough product in stock, your order can not be placed as is.');
-                    console.log('Please modify your order.');
-                    console.log("\n---------------------------------------------------------------------\n");
-
-                    displayInventory();
-                }
+                promptUserPurchase();
             }
-
-            //Output current inventory stock values to console
-            function displayInventory() {
-
-                //Create database query string
-                queryStr = 'SELECT * FROM products';
-
-                //Make database query
-                connection.query(queryStr, function (err, data) {
-                    if (err) throw err;
-
-                    console.log('Existing Inventory: ');
-                    console.log('...................\n');
-
-                    var inventory = '';
-                    for (var i = 0; i < data.length; i++) {
-                        inventory = '';
-                        inventory += 'Product ID: ' + data[i].item_id + '  //  ';
-                        inventory += 'Product Name: ' + data[i].product_name + '  //  ';
-                        inventory += 'Department: ' + data[i].department_name + '  //  ';
-                        inventory += 'Price: $' + data[i].price + '\n';
-
-                        console.log(inventory);
-                    }
-
-                    //Quantity customer wants to purchase
-                    promptUserPurchase();
-
-                })
-            }
-
-            //Run main application of bamazon
-            function runbamazon() {
-
-                //Display Available Inventory
-                displayInventory();
-            }
-
-            //Run application
-            runbamazon();
         });
-    }
+}
+
+//Function to purchase with selection
+function processingPurchase(choice, quantity) {
+    connection.query('SELECT * FROM products WHERE item_id=?', [choice], function (err, res) {
+        if (err) throw err;
+        var price;
+        var stock_quantity;
+
+        //Statement to calculate the stock and price
+        if (quantity <= parseInt(res[0].stock_quantity)) {
+            stock_quantity = parseInt(res[0].stock_quantity) - quantity;
+
+            //Update function to show purchases
+            updateProduct(stock_quantity, choice);
+
+            //Math to calculate price and show final purchase price
+            price = parseInt(res[0].price);
+            cost = parseInt(res[0].stock_quantity) * price;
+            console.log(stock_quantity)
+            console.log('\n Your total cost is: ' + cost + '\n');
+
+            //Does the user want to purchase another product?
+            getNewInput();
+        } else {
+            //If there is not enough product quantity, ask user to reselect
+            console.log('Insufficient quantity!');
+            promptUserPurchase();
+        }
+    });
+}
+
+// //Function to update product inventory
+function updateProduct(stock_quantity, choice) {
+    connection.query(
+        'UPDATE products SET stock_quantity=? WHERE item_id=?',
+        [stock_quantity, choice],
+        function (err, res) { }
+    );
+}
+
+// //Does the user want to purchase another product?
+function getNewInput() {
+    inquirer.prompt({
+        type: 'list',
+        message: 'Would you like to purchase another product?',
+        choices: ['Yes', 'No'],
+        name: 'choice'
+    })
+        .then(function (response) {
+            var choice = response.choice;
+
+            //Result is yes, log stock to user:
+            if (choice === 'Yes') {
+                printProducts();
+            } else {
+                //Display next message:
+                console.log('\n Thank you for your purchase! \n');
+
+                //Close connection
+                connection.end();
+            }
+        });
+};

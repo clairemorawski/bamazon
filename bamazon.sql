@@ -1,4 +1,4 @@
--- Drops the "bamazon_db" if it exists currently --
+e-- Drops the "bamazon_db" if it exists currently --
 DROP DATABASE IF EXISTS bamazon_db;
 -- Creates the "bamazon_db" database --
 CREATE DATABASE bamazon_db;
@@ -14,16 +14,16 @@ CREATE TABLE products
 (50) AUTO_INCREMENT NOT NULL,
     -- Makes a string column called "product_name" with the name of each product --
     product_name VARCHAR
-(30) NOT NULL,
+(30) NULL,
     -- Makes a sting column called "department_name" --
     department_name VARCHAR
-(30) NOT NULL,
+(30) NULL,
     -- Makes an numeric column called "price" which is the cost of each product to the customer --
     price INTEGER
-(10) NOT NULL,
+(10) NULL,
     -- Makes a numeric column called "stock_quantity" which is how much of the product is available to stores --
     stock_quantity INTEGER
-(10) NOT NULL,
+(10) NULL,
     PRIMARY KEY
 (item_id)
 );

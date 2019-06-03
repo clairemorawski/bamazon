@@ -16,5 +16,9 @@
     "node"
   ],
   "author": "Claire Morawski",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "inquirer": "^6.3.1",
+    "mysql": "^2.17.1"
+  }
 }
